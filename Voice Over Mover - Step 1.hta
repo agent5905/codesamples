@@ -1,0 +1,262 @@
+<HEAD>
+  <TITLE>Voice Over Control</TITLE>
+  <HTA:APPLICATION ID="oMyApp" 
+    APPLICATIONNAME="Drop Down" 
+    BORDER="Dialog"
+    CAPTION="Yes"
+    SCROLL="NO"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="Yes"
+   >
+   <SCRIPT LANGUAGE="VBScript">
+  sub DoResize 
+    window.resizeTo 700,630
+    screenWidth = Document.ParentWindow.Screen.AvailWidth
+    screenHeight = Document.ParentWindow.Screen.AvailHeight
+    posLeft = (screenWidth - 700) / 2
+    posTop = (screenHeight - 630) / 2     
+    window.moveTo posLeft, posTop
+  end sub
+
+DoResize()
+
+</script>
+</HEAD>
+<BODY>
+<SCRIPT LANGUAGE="VBScript">
+Dim prompt, sourceFolder, targetFolder, makeFolder, log, validate, fileType, endPattern
+Dim strDestFolder, strSearFolder, bolMakeFolder, bolRemoveFile, bolRealTime, bolError
+
+
+Set re = new regexp
+re.IgnoreCase = true
+
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+
+Sub Window_OnLoad
+    Window.Site.Focus
+End Sub
+
+Sub btnSubmit_OnClick
+    Dim strProduct
+    
+    oElements = Window.Site.SelectedIndex
+    strOption = Window.Site.Options(oElements).Text
+	strSourceFolder = txtSourceFolder.Value
+	strDestFolder = txtDestFolder.Value
+	bolMakeFolder = cbMakeFolder.Checked
+	bolRemoveFile = cbRemoveFile.Checked
+	bolRealTime = cbRealTime.Checked
+	bolError = cbError.Checked
+	
+    Select Case strOption
+        Case "Username"
+            validate = "^[a-z]+(|[\_][0-9]{2})\_[0-9]{2}\.mp3"
+			fileType = "(^[a-z]+[\_][0-9]{2})\_[0-9]{2}\.mp3"
+			endPattern = "\_[0-9]{2}.mp3$"
+        Case "Welcomeback"
+            validate = "^[a-z]+(\_wb|\_[0-9]{2}\_wb)[\_][0-9]{2}\.mp3"
+			fileType = "(^[a-z]+\_[0-9]{2})\_wb\_[0-9]{2}\.mp3"
+			endPattern = "\_wb\_[0-9]{2}.mp3$"
+        Case "Terrific Job"
+            validate = "^[a-z]+(\_ter|\_[0-9]{2}\_ter)[\_][0-9]{2}\.mp3"
+			fileType = "(^[a-z]+\_[0-9]{2})\_ter\_[0-9]{2}\.mp3"
+			endPattern = "\_ter\_[0-9]{2}.mp3$"
+        Case "Good Job"
+            validate = "^[a-z]+(\_gj|\_[0-9]{2}\_gj)[\_][0-9]{2}\.mp3"
+			fileType = "(^[a-z]+\_[0-9]{2})\_gj\_[0-9]{2}\.mp3"
+			endPattern = "\_gj\_[0-9]{2}.mp3$"
+    End Select
+	
+	addLog("---------------------------------------")
+	addLog("Remove File: " & bolRemoveFile)
+	addLog("Create Folder: " & bolMakeFolder)
+	addLog("Validation RegEx: " & validate)
+	addLog("Selected Option: " & strOption)
+	addLog("Destanation Folder: " & strDestFolder)
+	addLog("Search Folder: " & strSourceFolder)
+	addLog("---------------------------------------")
+	
+	If objFSO.FolderExists(strDestFolder) And objFSO.FolderExists(strSourceFolder) Then
+		main(strSourceFolder)
+	Else
+		If objFSO.FolderExists(strDestFolder) Then
+			If bolError Then addLog("ERROR: Could not find destanation folder.")
+		ElseIf objFSO.FolderExists(strSourceFolder) Then
+			If bolError Then addLog("ERROR: Could not find source folder.")
+		Else
+			If bolError Then addLog("ERROR: Something went wrong.")
+		End If
+	End If
+	
+End Sub
+
+Sub btnSFBrowse_OnClick
+    txtSourceFolder.Value = PickFolder("C:/")
+End Sub
+
+Sub btnDFBrowse_OnClick
+    txtDestFolder.Value = PickFolder("C:/")
+End Sub
+
+Sub btnClose_OnClick
+    Window.Close
+End Sub
+
+Sub btnClear_OnClick
+    txtLog.value = ""
+End Sub
+
+Sub main(Folder)
+	Dim username, newFileName, endName
+	
+	Set objFolder = objFSO.GetFolder(Folder)
+    Set filesList = objFolder.Files
+	
+	For Each file In filesList
+		fileName = file.Name
+		
+		sourceFile = objFolder.Path & "\" & fileName
+		
+		re.Pattern = fileType
+		
+		If re.Test(fileName) Then
+			
+			re.Pattern = "^[a-z]+"
+			Set reValue = re.Execute(fileName)
+			newFileName = reValue.Item(0)
+			
+			re.Pattern = endPattern
+		
+			Set reValue = re.Execute(fileName)
+			endName = reValue.Item(0)
+			
+			'Set oMatch = reValue(0)
+			'endName = oMatch.SubMatches(0) & ".mp3"
+
+			newfileName = newFileName & endName
+			re.Pattern = "^[a-z]+[\_][0-9]{2}"
+			
+		Else
+			re.Pattern = "^[a-z]+"	
+			newfileName = fileName
+		End If
+				
+		
+		Set reValue = re.Execute(fileName)
+
+		if(reValue.Count > 0) Then 
+		
+			userName = reValue.Item(0)
+			targetFile = strDestFolder & "\" & userName & "\" & newfileName
+			
+			If objFSO.FolderExists(strDestFolder & "\" & userName) Then
+				addLog("Found: " & strDestFolder & "\" & userName)
+			Else
+				If bolMakeFolder Then
+					Set f = objFSO.CreateFolder(strDestFolder & "\" & userName)
+					addLog("Created: " & strDestFolder & "\" & userName)
+				Else
+					If bolError Then addLog("Error: " & strDestFolder & "\" & userName)
+				End If
+			End If 
+			
+			If objFSO.FolderExists(strDestFolder & "\" & userName) Then
+				re.Pattern = validate
+				If re.Test(fileName) Then
+					If bolRemoveFile Then
+						If objFSO.FileExists(targetFile) Then
+							addLog("File Already Exists in Destanation: " & fileName)
+						Else
+							objFSO.MoveFile sourceFile, targetFile
+							addLog("Moved: " & fileName)
+						End If
+					Else
+						If objFSO.FileExists(targetFile) Then
+							addLog("File Already Exists in Destanation: " & fileName)
+						Else
+							objFSO.CopyFile sourceFile, targetFile
+							addLog("Copied: " & fileName)
+						End If
+					End If
+					
+				End If
+			
+			End If
+		End If
+		
+	Next
+	
+	addLog("**************Process Complete****************")
+	
+End Sub
+
+Function addLog(str)
+    txtLog.value = str & vbCrLf & txtLog.value
+	If bolRealTime Then Refresh
+End Function
+
+Function PickFolder(strStartDir)
+	Dim SA, F
+	Set SA = CreateObject("Shell.Application")
+	Set F = SA.BrowseForFolder(0, "Choose a folder", 0, strStartDir)
+	If (Not F Is Nothing) Then
+		PickFolder = F.Items.Item.path
+	End If
+	Set F = Nothing
+	Set SA = Nothing
+End Function
+
+Sub Refresh 
+	'Triggers screen updates in an HTA...  
+	With CreateObject("WScript.Shell")  
+		.run "%comspec% /c echo something & exit", 0, true  
+	End With  
+End Sub
+</SCRIPT>
+Enter the search directory
+<BR>
+<Input Type="Text" id="txtSourceFolder" size="60" value="C:\">
+<Input Type = "Button" Name = "btnSFBrowse" VALUE = "Browse">
+<BR>
+Enter the destanation directory
+<BR>
+<Input Type="Text" id="txtDestFolder" size="60" value="C:\output">
+<Input Type = "Button" Name = "btnDFBrowse" VALUE = "Browse">
+<BR>
+<P>Select which item to process:
+<BR>
+<SELECT NAME="Site">
+    <OPTION>Username</OPTION>
+    <OPTION>Welcomeback</OPTION>
+    <OPTION>Terrific Job</OPTION>
+    <OPTION>Good Job</OPTION>
+</SELECT><P>
+<input type="checkbox" name="checkbox" id="cbMakeFolder"/>
+<label for="checkbox_id">Create folder if none is found.</label>
+<BR>
+<input type="checkbox" name="checkbox" id="cbRemoveFile"/>
+<label for="checkbox_id">Remove original file from source folder.</label>
+<BR>
+<BR>
+<P>Error Logging
+<BR>
+<input type="checkbox" name="checkbox" id="cbRealTime"/>
+<label for="checkbox_id">Use real time logging (will run a LOT slower).</label>
+<BR>
+<input type="checkbox" name="checkbox" id="cbError"/>
+<label for="checkbox_id">Record Errors.</label>
+<BR>
+<BR>
+<Input Type = "Button" Name = "btnSubmit" VALUE = "SUBMIT">
+<Input Type = "Button" Name = "btnClose" VALUE = "CLOSE">
+<BR>
+<BR>
+Log:
+<BR>
+<textarea rows="10" cols="60" id="txtLog" ></textarea>
+<BR>
+<Input Type = "Button" Name = "btnClear" VALUE = "Clear">
+</BODY>
