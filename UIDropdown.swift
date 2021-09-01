@@ -7,7 +7,7 @@
 
 import Foundation
 import UIKit
-
+ 
 @objc protocol UIDropdownDelegate:class{
     func dropdownDidChange(selectedIndex:Int, selectedText:String)
 }

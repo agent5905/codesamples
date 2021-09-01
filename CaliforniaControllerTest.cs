@@ -1,31 +1,19 @@
 ﻿using Xunit;
-using Rome.Controllers.US;
-using Rome.Contracts.DAL;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Rome.Contracts;
 using Moq;
 using System.Data;
-using Rome.Models;
-using RomeTest.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using Rome.DAL;
-using Rome.Managers;
 using AutoMapper;
-using Rome.Common.Mapping;
 using MassTransit;
-using Rome.Common.DTO;
 using System.Configuration;
-using Rome.Contracts.Managers;
 using System.Threading.Tasks;
 using AutoFixture;
-using Rome.Models.Data;
-using Rome.Controllers.California;
 using System;
 using System.Reflection;
 
-namespace RomeTest.Controllers
+namespace Test.Controllers
 {
     public class CaliforniaControllerTest : IClassFixture<WebApplicationFactory<Rome.Startup>>
     {

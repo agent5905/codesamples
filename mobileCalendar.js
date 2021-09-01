@@ -4,7 +4,7 @@
 		MobileCalendar (id, color)
 			id:String - the id of the div element
 			color:String - A predefined color theme.
-
+ 
 		Example:
 			//CSS
 				#calendar {
